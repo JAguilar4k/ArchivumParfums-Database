@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database:
+    name: Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Check migration syntax
+        run: |
+          for migration in ./*.php; do
+            php -l "$migration"
+          done
+
+      - name: Create the database roles and databases
+        env:
+          PGPASSWORD: postgres
+        run: >-
+          psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1
+          -v owner_password=owner-secret -v app_password=app-secret
+          -f roles.sql
+
+      - name: Verify the database ownership and privileges
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f tests/roles.sql
+
+      - name: Connect as the application role
+        env:
+          PGPASSWORD: app-secret
+        run: psql -h 127.0.0.1 -U archivum_app -d archivum_hexagonal -v ON_ERROR_STOP=1 -c 'SELECT current_user'

@@ -2,7 +2,7 @@
 
 El esquema está en tercera forma normal (3FN). Este documento describe con todo su detalle las tablas que ya existen y a nivel de relación las que están previstas; cada módulo completa las suyas en el pull request que agrega su migración (ver [Regla para cada migración nueva](#regla-para-cada-migración-nueva)).
 
-Las convenciones de nombres, llaves, fechas, dinero, roles y migraciones están en [database.md](database.md) y no se repiten aquí. Las tablas previstas salen de la sección 7 de [la especificación](especificacion.md#7-modelo-de-datos-inicial) y sus nombres, del [lenguaje ubicuo](ubiquitous-language.md).
+Las convenciones de nombres, llaves, fechas, dinero, roles y migraciones están en [database.md](database.md) y no se repiten aquí. Las tablas previstas salen de la sección 7 de [la especificación](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/blob/main/docs/especificacion.md#7-modelo-de-datos-inicial) y sus nombres, del [lenguaje ubicuo](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/blob/main/docs/ubiquitous-language.md).
 
 ## Diagrama
 
@@ -264,7 +264,7 @@ erDiagram
     }
 ```
 
-Las tablas sin columnas en el diagrama están previstas y todavía no existen. `webhook_events` guarda los avisos verificados de las pasarelas desde #94; aparece sin relaciones porque no pertenece a ninguna tienda (ver [excepciones](#excepciones-deliberadas)). Un pago pertenece a un pedido o a un paquete de decants, nunca a los dos: `payments.order_id` y `payments.decant_pack_id` tienen sus llaves foráneas compuestas con la tienda, sin una relación polimórfica sin llave. Además hay tablas del framework (caché y colas de Laravel) que no pertenecen al negocio y no se documentan aquí.
+Las tablas sin columnas en el diagrama están previstas y todavía no existen. `webhook_events` guarda los avisos verificados de las pasarelas desde [#94](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/94); aparece sin relaciones porque no pertenece a ninguna tienda (ver [excepciones](#excepciones-deliberadas)). Un pago pertenece a un pedido o a un paquete de decants, nunca a los dos: `payments.order_id` y `payments.decant_pack_id` tienen sus llaves foráneas compuestas con la tienda, sin una relación polimórfica sin llave. Además hay tablas del framework (caché y colas de Laravel) que no pertenecen al negocio y no se documentan aquí.
 
 ## Tablas creadas
 
@@ -327,7 +327,7 @@ Cada fila es la ficha que una cuenta recibe en cada tienda donde opera.
 | `id` | `uuid` | Llave primaria |
 | `business_id` | `uuid` | Llave foránea a `businesses` (`customers_business_id_foreign`), borrado en cascada |
 | `user_id` | `uuid` | Llave foránea a `users` (`customers_user_id_foreign`), borrado en cascada |
-| `phone` | `text` | Opcional; es `text` porque se guarda cifrado (#110) |
+| `phone` | `text` | Opcional; es `text` porque se guarda cifrado ([#110](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/110)) |
 | `created_at`, `updated_at` | `timestamptz` | |
 
 - Llaves candidatas: `id`, `(business_id, user_id)` (`customers_business_id_user_id_unique`, una ficha por cuenta y tienda) y `(id, business_id)` (`customers_id_business_id_unique`, para las llaves foráneas compuestas de `appointments`, `orders` y las demás).
@@ -371,7 +371,7 @@ Cada fila es un perfume del catálogo de una tienda: lo que el dueño carga y la
 
 - Llaves candidatas: `id` y `(id, business_id)` (`perfumes_id_business_id_unique`), que las notas, las etiquetas y las presentaciones usan en sus llaves foráneas compuestas.
 - Índice `perfumes_business_id_is_active_index` sobre `(business_id, is_active)`: la vitrina lista los perfumes activos de una tienda.
-- Sin `CHECK`. No hay una llave única por marca, nombre y concentración: es una decisión de negocio que sigue abierta en #37.
+- Sin `CHECK`. No hay una llave única por marca, nombre y concentración: es una decisión de negocio que sigue abierta en [#37](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/37).
 - Política de fila: `perfumes_business_isolation`, igual que `members` (`USING` y `WITH CHECK` con `business_id` igual a la tienda de la transacción), habilitada y forzada por la migración `enable_row_level_security_on_catalog_tables`.
 
 ### perfume_notes
@@ -404,7 +404,7 @@ Cada fila es una etiqueta de un perfume: el momento del día, el clima o la ocas
 | `created_at`, `updated_at` | `timestamptz` | |
 
 - Llaves candidatas: `id` y `(business_id, perfume_id, kind, value)` (`perfume_tags_business_id_perfume_id_kind_value_unique`): un perfume no repite la misma etiqueta.
-- Los valores cerrados se guardan en inglés, como el resto de la base (ver [Idioma](ubiquitous-language.md#convención-de-idioma)).
+- Los valores cerrados se guardan en inglés, como el resto de la base (ver [Idioma](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/blob/main/docs/ubiquitous-language.md#convención-de-idioma)).
 - Política de fila: `perfume_tags_business_isolation`.
 
 ### perfume_variants
@@ -417,20 +417,20 @@ Cada fila es una presentación de un perfume: un tamaño en ml y su precio de ve
 | `business_id` | `uuid` | Llave foránea a `businesses` (`perfume_variants_business_id_foreign`), borrado en cascada |
 | `perfume_id` | `uuid` | Llave foránea compuesta `(perfume_id, business_id)` a `perfumes(id, business_id)` (`perfume_variants_perfume_id_business_id_foreign`), borrado en cascada |
 | `size_ml` | `smallint` | `perfume_variants_size_ml_check`: mayor que 0 |
-| `sale_price` | `integer` | Opcional; colones enteros; `perfume_variants_sale_price_check`: no negativo. Nulo mientras la presentación no tiene costo de proveedor ni precio manual (#43) |
+| `sale_price` | `integer` | Opcional; colones enteros; `perfume_variants_sale_price_check`: no negativo. Nulo mientras la presentación no tiene costo de proveedor ni precio manual ([#43](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/43)) |
 | `sale_price_override` | `integer` | Opcional; el precio que el dueño fijó a mano y reemplaza al calculado (R1); `perfume_variants_sale_price_override_check`: no negativo |
 | `is_active` | `boolean` | Por defecto `true` |
 | `created_at`, `updated_at` | `timestamptz` | |
 
-- Llaves candidatas: `id` y `(business_id, perfume_id, size_ml)` (`perfume_variants_business_id_perfume_id_size_ml_unique`): un perfume no repite un tamaño. La llave única adicional `(id, business_id)` se incorpora con #69 para las referencias compuestas de botellas y líneas de pedido.
+- Llaves candidatas: `id` y `(business_id, perfume_id, size_ml)` (`perfume_variants_business_id_perfume_id_size_ml_unique`): un perfume no repite un tamaño. La llave única adicional `(id, business_id)` se incorpora con [#69](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/69) para las referencias compuestas de botellas y líneas de pedido.
 - Índice `perfume_variants_business_id_is_active_index` sobre `(business_id, is_active)`.
-- Los `CHECK` de precio solo prohíben los montos negativos: el rango del precio sigue abierto en #36, y un valor nulo pasa un `CHECK`.
+- Los `CHECK` de precio solo prohíben los montos negativos: el rango del precio sigue abierto en [#36](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/36), y un valor nulo pasa un `CHECK`.
 - `sale_price` guarda un valor calculable; la [excepción](#excepciones-deliberadas) está justificada abajo.
 - Política de fila: `perfume_variants_business_isolation`.
 
 ### services
 
-Cada fila es un servicio que la tienda ofrece agendar, con su duración, su precio, el margen entre citas y el máximo de perfumes (R11). Es la tabla que el panel del dueño administra (#53) y la que la vitrina pública lista (#54).
+Cada fila es un servicio que la tienda ofrece agendar, con su duración, su precio, el margen entre citas y el máximo de perfumes (R11). Es la tabla que el panel del dueño administra ([#53](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/53)) y la que la vitrina pública lista ([#54](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/54)).
 
 | Columna | Tipo | Regla |
 |---|---|---|
@@ -441,13 +441,13 @@ Cada fila es un servicio que la tienda ofrece agendar, con su duración, su prec
 | `price` | `integer` | Colones enteros; `services_price_check`: no negativo |
 | `buffer_minutes` | `integer` | Margen entre citas; `services_buffer_minutes_check`: no negativo |
 | `max_perfumes` | `integer` | `services_max_perfumes_check`: no negativo |
-| `is_active` | `boolean` | Por defecto `true`; desactivar no borra el servicio (#53) |
+| `is_active` | `boolean` | Por defecto `true`; desactivar no borra el servicio ([#53](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/53)) |
 | `created_at`, `updated_at` | `timestamptz` | |
 
-- Llaves candidatas: `id` y `(id, business_id)` (`services_id_business_id_unique`), que es el destino de las llaves foráneas compuestas de `appointments` (#59).
+- Llaves candidatas: `id` y `(id, business_id)` (`services_id_business_id_unique`), que es el destino de las llaves foráneas compuestas de `appointments` ([#59](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/59)).
 - Índice `services_business_id_is_active_index` sobre `(business_id, is_active)`: el panel lista activos e inactivos de una tienda.
 - Política de fila: `services_business_isolation`, igual que `members`; la habilita `enable_row_level_security_on_scheduling_tables`.
-- El servicio inicial es «Prueba de olores»: 45 min, ₡0, 15 min de margen y hasta 5 perfumes (R11). Los sembradores lo crean en cada tienda de demostración a partir de #53.
+- El servicio inicial es «Prueba de olores»: 45 min, ₡0, 15 min de margen y hasta 5 perfumes (R11). Los sembradores lo crean en cada tienda de demostración a partir de [#53](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/53).
 
 ### business_hours
 
@@ -486,7 +486,7 @@ Cada fila es un tramo de atención de una persona del personal: el día y la hor
 
 ### schedule_blocks
 
-Cada fila bloquea un rango de horas de una persona o de toda la tienda, con su motivo (R13 y #57).
+Cada fila bloquea un rango de horas de una persona o de toda la tienda, con su motivo (R13 y [#57](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/57)).
 
 | Columna | Tipo | Regla |
 |---|---|---|
@@ -496,19 +496,19 @@ Cada fila bloquea un rango de horas de una persona o de toda la tienda, con su m
 | `starts_at` | `timestamptz` | Inicio del bloqueo, en instantes |
 | `ends_at` | `timestamptz` | Fin del bloqueo; `schedule_blocks_starts_at_check`: posterior a `starts_at` |
 | `reason` | `varchar(255)` | Motivo del bloqueo |
-| `source` | `varchar(10)` | Por defecto `manual`; `schedule_blocks_source_check`: `manual` o `google` (#183) |
+| `source` | `varchar(10)` | Por defecto `manual`; `schedule_blocks_source_check`: `manual` o `google` ([#183](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/183)) |
 | `external_id` | `varchar(255)` | Opcional; el identificador del evento de Google Calendar, nulo mientras el bloqueo se crea en el panel |
 | `created_at`, `updated_at` | `timestamptz` | |
 
 - Índice `schedule_blocks_business_id_starts_at_ends_at_index` sobre `(business_id, starts_at, ends_at)`: la disponibilidad pide los bloqueos que se cruzan con un rango.
 - Los tramos de estas cuatro tablas guardan la hora local en `time` (`opens_at`, `closes_at`, `starts_at`, `ends_at`) y los bloqueos, que son instantes, en `timestamptz`.
-- Solo los bloqueos con `source` `manual` se editan o se borran desde el panel; uno de `google` responde 409 `conflicto` (#57).
+- Solo los bloqueos con `source` `manual` se editan o se borran desde el panel; uno de `google` responde 409 `conflicto` ([#57](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/57)).
 - Política de fila: `schedule_blocks_business_isolation`.
 
 
 ### decant_bottles
 
-Cada fila es una botella abierta de una presentación. Los ml son enteros. La capacidad se toma de la presentación al abrirla y el saldo inicial puede ser menor, según la decisión del equipo para #68 y #71.
+Cada fila es una botella abierta de una presentación. Los ml son enteros. La capacidad se toma de la presentación al abrirla y el saldo inicial puede ser menor, según la decisión del equipo para [#68](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/68) y [#71](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/71).
 
 | Columna | Tipo | Regla |
 |---|---|---|
@@ -540,12 +540,12 @@ Cada fila registra un cambio de ml de una botella (R8). No se borra ni se modifi
 | `decant_bottle_id` | `uuid` | Llave foránea compuesta a `decant_bottles(id, business_id)`; borrado restringido |
 | `type` | `varchar(20)` | `decant_movements_type_check`: `reservation`, `release`, `consumption` o `adjustment` |
 | `ml` | `integer` | `decant_movements_ml_check`: positivo en reserva, liberación y consumo; distinto de 0 y con signo en ajustes |
-| `order_line_id` | `uuid` | Opcional; llave foránea compuesta a `order_lines(id, business_id)`, incorporada con #78 |
+| `order_line_id` | `uuid` | Opcional; llave foránea compuesta a `order_lines(id, business_id)`, incorporada con [#78](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/78) |
 | `user_id` | `uuid` | Opcional para movimientos automáticos; llave foránea a la cuenta global `users(id)`; borrado restringido |
 | `reason` | `text` | Opcional salvo en ajustes: `decant_movements_reason_check` exige texto no vacío |
 | `created_at` | `timestamptz` | Obligatoria; por defecto `CURRENT_TIMESTAMP`; no hay `updated_at` |
 
-Índice `(business_id, decant_bottle_id, created_at)` para el historial, que la API ordena por fecha e identificador descendentes. La API marca con `canjeado` los movimientos de una línea pagada con un paquete, leyendo `order_lines.decant_pack_id`; no hay una columna para eso (#146). La seguridad de fila está habilitada y forzada con dos políticas: `decant_movements_business_read` solo permite `SELECT` de la tienda actual y `decant_movements_business_insert` solo permite `INSERT` en ella. Se revocan `UPDATE`, `DELETE` y `TRUNCATE` al rol de la aplicación. La llave a `users` está justificada en la [lista blanca](#lista-blanca-de-businesskeystest).
+Índice `(business_id, decant_bottle_id, created_at)` para el historial, que la API ordena por fecha e identificador descendentes. La API marca con `canjeado` los movimientos de una línea pagada con un paquete, leyendo `order_lines.decant_pack_id`; no hay una columna para eso ([#146](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/146)). La seguridad de fila está habilitada y forzada con dos políticas: `decant_movements_business_read` solo permite `SELECT` de la tienda actual y `decant_movements_business_insert` solo permite `INSERT` en ella. Se revocan `UPDATE`, `DELETE` y `TRUNCATE` al rol de la aplicación. La llave a `users` está justificada en la [lista blanca](#lista-blanca-de-businesskeystest).
 
 ### decant_pack_plans
 
@@ -584,13 +584,13 @@ Cada fila es un paquete que compró un cliente (R33). Copia de la oferta lo que 
 | `max_price_per_ml` | `integer` | Opcional; el tope de la oferta al comprar; `decant_packs_max_price_per_ml_check`: mayor que 0 |
 | `status` | `varchar(20)` | Por defecto `pending_payment`; `decant_packs_status_check`: `pending_payment` con todos sus decants, `active` con al menos uno, `exhausted` sin ninguno o `expired` |
 | `expires_at` | `timestamptz` | El plazo de pago mientras espera su pago y el fin de su vigencia desde que se activa |
-| `idempotency_key` | `varchar(100)` | Opcional; la clave que el cliente envió con la compra en el encabezado `Idempotency-Key` (#145) |
+| `idempotency_key` | `varchar(100)` | Opcional; la clave que el cliente envió con la compra en el encabezado `Idempotency-Key` ([#145](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/145)) |
 | `created_at`, `updated_at` | `timestamptz` | |
 
-- Llaves únicas: `id`, `(id, business_id)` y `(business_id, customer_id, idempotency_key)`, que impide que una clave compre dos paquetes, también con dos compras simultáneas (#145). PostgreSQL no compara los `NULL`, así que las compras sin clave no chocan entre sí.
-- Índices `(business_id, customer_id, status)` para los paquetes del cliente y `(business_id, status, expires_at)` para los vencimientos (#159).
+- Llaves únicas: `id`, `(id, business_id)` y `(business_id, customer_id, idempotency_key)`, que impide que una clave compre dos paquetes, también con dos compras simultáneas ([#145](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/145)). PostgreSQL no compara los `NULL`, así que las compras sin clave no chocan entre sí.
+- Índices `(business_id, customer_id, status)` para los paquetes del cliente y `(business_id, status, expires_at)` para los vencimientos ([#159](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/159)).
 - Política `decant_packs_business_isolation`, habilitada y forzada.
-- El canje descuenta un decant con un `UPDATE` condicional sobre esta fila, que exige `active`, vigencia y decants restantes y pasa el paquete a `exhausted` al llegar a 0 en la misma sentencia (#147). Los `CHECK` impiden un saldo negativo aunque un camino se salte esa condición.
+- El canje descuenta un decant con un `UPDATE` condicional sobre esta fila, que exige `active`, vigencia y decants restantes y pasa el paquete a `exhausted` al llegar a 0 en la misma sentencia ([#147](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/147)). Los `CHECK` impiden un saldo negativo aunque un camino se salte esa condición.
 
 ### decant_pack_redemptions
 
@@ -607,7 +607,7 @@ Cada fila es un decant de un paquete canjeado en una línea de un pedido (R34).
 - Llaves únicas: `id` y `(business_id, order_line_id)`: una línea del pedido canjea un solo decant.
 - Índice `(business_id, decant_pack_id)` para los canjes de un paquete.
 - Política `decant_pack_redemptions_business_isolation`, habilitada y forzada.
-- La fila se crea en la transacción del pedido, después de guardar su línea, y se borra cuando el pedido se cancela y el decant vuelve a su paquete (#146). Así `remaining_decants` es siempre `total_decants` menos las filas del paquete; lo que pasó con esa línea queda en el historial de la botella, con su reserva y su liberación.
+- La fila se crea en la transacción del pedido, después de guardar su línea, y se borra cuando el pedido se cancela y el decant vuelve a su paquete ([#146](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/146)). Así `remaining_decants` es siempre `total_decants` menos las filas del paquete; lo que pasó con esa línea queda en el historial de la botella, con su reserva y su liberación.
 
 ### orders
 
@@ -647,7 +647,7 @@ Cada fila es una botella bajo pedido o un decant. El precio unitario es un hecho
 | `quantity` | `integer` | `order_lines_quantity_check`: mayor que 0; en decants debe ser 1 |
 | `unit_price` | `integer` | Precio congelado en colones; `order_lines_unit_price_check`: no negativo |
 | `status` | `varchar(20)` | Botellas: `pending`, `ordered`, `received` o `unavailable`; decants: `reserved`, `prepared` o `released` |
-| `decant_pack_id` | `uuid` | Opcional; llave foránea compuesta a `decant_packs(id, business_id)`: el paquete con que se canjeó el decant (#146) |
+| `decant_pack_id` | `uuid` | Opcional; llave foránea compuesta a `decant_packs(id, business_id)`: el paquete con que se canjeó el decant ([#146](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/146)) |
 | `purchase_order_line_id` | `uuid` | Opcional; reservada para M23, todavía sin llave foránea |
 | `created_at`, `updated_at` | `timestamptz` | |
 
@@ -662,10 +662,10 @@ Cada fila es un intento de cobro de un pedido o de un paquete de decants. La int
 | `id` | `uuid` | Llave primaria y clave del intento usada por el adaptador |
 | `business_id` | `uuid` | Llave foránea a `businesses` |
 | `order_id` | `uuid` | Opcional; llave foránea compuesta a `orders(id, business_id)`; `payments_payable_check` exige exactamente uno entre `order_id` y `decant_pack_id` |
-| `decant_pack_id` | `uuid` | Opcional; llave foránea compuesta a `decant_packs(id, business_id)`, incorporada con #143; el pago de la compra de un paquete la usa desde #145 |
+| `decant_pack_id` | `uuid` | Opcional; llave foránea compuesta a `decant_packs(id, business_id)`, incorporada con [#143](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/143); el pago de la compra de un paquete la usa desde [#145](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/145) |
 | `purpose` | `varchar(16)` | `payments_purpose_check`: `deposit`, `balance` o `full` |
 | `amount` | `integer` | Principal en colones; `payments_amount_check`: mayor que 0 |
-| `gateway` | `varchar(16)` | `payments_gateway_check`: `onvo`, `paypal` o `manual`; `manual` es el pago del saldo que un dueño registra en la entrega (#98) |
+| `gateway` | `varchar(16)` | `payments_gateway_check`: `onvo`, `paypal` o `manual`; `manual` es el pago del saldo que un dueño registra en la entrega ([#98](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/98)) |
 | `method` | `varchar(24)` | Medio del cobro en línea. Por defecto `card`; `payments_method_check`: `card` o `sinpe_mobile` con una pasarela y nulo con `manual`, cuyo medio está en `manual_method` |
 | `status` | `varchar(24)` | Por defecto `pending`; `payments_status_check`: `pending`, `succeeded`, `failed`, `expired`, `refunded` o `partially_refunded` |
 | `charged_currency` | `varchar(3)` | Por defecto `CRC`; `payments_charged_currency_check`: `CRC` o `USD` |
@@ -681,7 +681,7 @@ Cada fila es un intento de cobro de un pedido o de un paquete de decants. La int
 - Llaves únicas: `id`, `(id, business_id)` y `(business_id, gateway, provider_reference)`; las referencias nulas no impiden guardar una intención todavía sin respuesta.
 - Índice único parcial `payments_one_pending_purpose` sobre `(business_id, order_id, purpose)` cuando `status = 'pending'`: no puede haber dos intentos pendientes del mismo propósito. `payments_one_pending_pack_purpose` hace lo mismo sobre `(business_id, decant_pack_id, purpose)` para los paquetes. Índice adicional `(business_id, status)`.
 - Política `payments_business_isolation`, habilitada y forzada, más `payments_definer_read` de solo lectura para el dueño del esquema al resolver recursos del cliente.
-- La consulta autenticada al proveedor es la autoridad. La piden un aviso verificado de la pasarela (#94) o la conciliación de los pagos pendientes (#96); la consulta del cliente solo lee el pago guardado. El pago y el efecto sobre el pedido se guardan en la misma transacción. El registro único de cada aviso y su cola corresponden a #95.
+- La consulta autenticada al proveedor es la autoridad. La piden un aviso verificado de la pasarela ([#94](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/94)) o la conciliación de los pagos pendientes ([#96](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/96)); la consulta del cliente solo lee el pago guardado. El pago y el efecto sobre el pedido se guardan en la misma transacción. El registro único de cada aviso y su cola corresponden a [#95](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/95).
 - `fn_payment_business(gateway, referencia)` responde la tienda de una referencia del proveedor (`provider_reference`, `checkout_reference` o `capture_reference`) antes de fijar una tienda, para el aviso que no trae la que Archivum envió con el cobro. Es `SECURITY DEFINER`, lee por `payments_definer_read` y solo devuelve el identificador de la tienda.
 - ONVO recibe el principal multiplicado por 100 en su API; ese formato de transporte no cambia que `charged_amount` en CRC guarde colones enteros. PayPal recibe texto decimal USD y la base conserva centavos y el tipo de cambio aplicado. Las conversiones viven en los adaptadores.
 
@@ -703,13 +703,13 @@ Cada fila asigna parte de un pago confirmado a una devolución del pedido o de u
 | `reason` | `text` | Opcional |
 | `created_at`, `updated_at` | `timestamptz` | |
 
-Llaves únicas: `id` y `(id, business_id)`. Índice `(business_id, status)`. Política `refunds_business_isolation`, habilitada y forzada. `PaymentRefundRequests` asigna pagos bajo bloqueo para que devoluciones pendientes o confirmadas no superen el principal, y `RefundPayment` bloquea el pago antes de contar sus devoluciones pendientes (#97). `RequestRefundJob` persiste `attempted_at` y `charged_amount` antes del HTTP, fuera de la transacción de la operación que registró la devolución, conserva la referencia en una transacción propia y aplica la devolución al pago y al pedido en una última transacción, con un `UPDATE` condicionado a `status = 'pending'`. Con ONVO, una respuesta perdida sin referencia queda pendiente para que una persona la revise y ningún trabajo repite ese POST; con PayPal, los reintentos del trabajo lo repiten con el mismo `PayPal-Request-Id`, y PayPal responde la devolución que ya creó. Una devolución con referencia que sigue pendiente se confirma con el aviso de PayPal o con la conciliación.
+Llaves únicas: `id` y `(id, business_id)`. Índice `(business_id, status)`. Política `refunds_business_isolation`, habilitada y forzada. `PaymentRefundRequests` asigna pagos bajo bloqueo para que devoluciones pendientes o confirmadas no superen el principal, y `RefundPayment` bloquea el pago antes de contar sus devoluciones pendientes ([#97](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/97)). `RequestRefundJob` persiste `attempted_at` y `charged_amount` antes del HTTP, fuera de la transacción de la operación que registró la devolución, conserva la referencia en una transacción propia y aplica la devolución al pago y al pedido en una última transacción, con un `UPDATE` condicionado a `status = 'pending'`. Con ONVO, una respuesta perdida sin referencia queda pendiente para que una persona la revise y ningún trabajo repite ese POST; con PayPal, los reintentos del trabajo lo repiten con el mismo `PayPal-Request-Id`, y PayPal responde la devolución que ya creó. Una devolución con referencia que sigue pendiente se confirma con el aviso de PayPal o con la conciliación.
 
-En PayPal, `charged_amount` sale de convertir el total acumulado de las devoluciones del pago con el tipo de cambio del pago original y restar lo que ya salió, así la suma de las devoluciones nunca pasa de `payments.charged_amount`. Por eso se guarda al intentar y no se recalcula después. La migración de #97 llenó la columna de las devoluciones en CRC ya intentadas con su `amount`.
+En PayPal, `charged_amount` sale de convertir el total acumulado de las devoluciones del pago con el tipo de cambio del pago original y restar lo que ya salió, así la suma de las devoluciones nunca pasa de `payments.charged_amount`. Por eso se guarda al intentar y no se recalcula después. La migración de [#97](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/97) llenó la columna de las devoluciones en CRC ya intentadas con su `amount`.
 
 ### webhook_events
 
-Tabla global con cada aviso verificado de una pasarela y su resultado (#94). Un aviso de origen no verificado no se guarda, y uno verificado se guarda antes de procesarse (#95).
+Tabla global con cada aviso verificado de una pasarela y su resultado ([#94](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/94)). Un aviso de origen no verificado no se guarda, y uno verificado se guarda antes de procesarse ([#95](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/95)).
 
 | Columna | Tipo | Regla |
 |---|---|---|
@@ -723,11 +723,11 @@ Tabla global con cada aviso verificado de una pasarela y su resultado (#94). Un 
 | `processed_at` | `timestamptz` | `webhook_events_processed_at_check`: presente solo si `status` es `processed` |
 | `created_at`, `updated_at` | `timestamptz` | |
 
-Llaves únicas: `id` y `(gateway, event_id)`. Sin `business_id`, llave al pago ni política de fila: al recibir un evento todavía hay que resolver su pago y tienda desde una referencia verificada. `INSERT ... ON CONFLICT DO NOTHING` guarda solo la primera llegada de cada evento, como `pending`, junto con su trabajo en la cola; un aviso que la pasarela reenvía no cambia nada. El trabajo lo bloquea, lo aplica y lo marca `processed` en una transacción, o lo deja `failed` con la clave de su error (#95).
+Llaves únicas: `id` y `(gateway, event_id)`. Sin `business_id`, llave al pago ni política de fila: al recibir un evento todavía hay que resolver su pago y tienda desde una referencia verificada. `INSERT ... ON CONFLICT DO NOTHING` guarda solo la primera llegada de cada evento, como `pending`, junto con su trabajo en la cola; un aviso que la pasarela reenvía no cambia nada. El trabajo lo bloquea, lo aplica y lo marca `processed` en una transacción, o lo deja `failed` con la clave de su error ([#95](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/95)).
 
 ### password_reset_tokens
 
-Recuperación de contraseña pendiente de cada correo (#193, `docs/password-recovery.md`). Una cuenta no pertenece a una tienda: no lleva `business_id` ni política de fila.
+Recuperación de contraseña pendiente de cada correo ([#193](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/193), `docs/password-recovery.md`). Una cuenta no pertenece a una tienda: no lleva `business_id` ni política de fila.
 
 | Columna | Tipo | Notas |
 | --- | --- | --- |
@@ -737,7 +737,7 @@ Recuperación de contraseña pendiente de cada correo (#193, `docs/password-reco
 
 ### audit_logs
 
-Bitácora inalterable de cambios sensibles (#113, `docs/audit-log.md`). El rol de la aplicación solo inserta y lee, y `trg_audit_logs_immutable` rechaza `UPDATE`, `DELETE` y `TRUNCATE` desde cualquier rol. Política: `audit_logs_business_isolation`.
+Bitácora inalterable de cambios sensibles ([#113](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/113), `docs/audit-log.md`). El rol de la aplicación solo inserta y lee, y `trg_audit_logs_immutable` rechaza `UPDATE`, `DELETE` y `TRUNCATE` desde cualquier rol. Política: `audit_logs_business_isolation`.
 
 | Columna | Tipo | Notas |
 | --- | --- | --- |
@@ -757,7 +757,7 @@ Existen en el diagrama, pero su detalle llega en el pull request de la migració
 
 | Grupo | Tablas | Llega con |
 |---|---|---|
-| Citas | `appointments`, `appointment_perfumes`, `appointment_reminders` | #59 (M09) |
+| Citas | `appointments`, `appointment_perfumes`, `appointment_reminders` | [#59](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/59) (M09) |
 | Lista de espera | `waitlist_entries` | M19 |
 | Proveedores | `suppliers`, `supplier_prices`, `catalog_imports`, `purchase_orders`, `purchase_order_lines` | M23 |
 
@@ -795,20 +795,20 @@ Las tablas previstas se revisan contra esta misma tabla cuando se crean.
 
 ## Excepciones deliberadas
 
-Cada una se aparta de la 3FN o de la regla de llaves con una razón. Las cuatro primeras son las que pide el issue #35.
+Cada una se aparta de la 3FN o de la regla de llaves con una razón. Las cuatro primeras son las que pide el issue [#35](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/35).
 
 | Excepción | Por qué es correcta |
 |---|---|
-| `perfume_variants.sale_price` se guarda y se recalcula | Es calculable (costo del proveedor más el margen, o el precio manual; R1 a R3), pero la vitrina y los pedidos lo leen en cada petición y no deben recalcularlo con los costos de todos los proveedores. Lo recalculan #43 al fijar o cambiar el precio y la importación del catálogo (#174). `sale_price_override` guarda la decisión del dueño, que no se puede derivar |
+| `perfume_variants.sale_price` se guarda y se recalcula | Es calculable (costo del proveedor más el margen, o el precio manual; R1 a R3), pero la vitrina y los pedidos lo leen en cada petición y no deben recalcularlo con los costos de todos los proveedores. Lo recalculan [#43](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/43) al fijar o cambiar el precio y la importación del catálogo ([#174](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/174)). `sale_price_override` guarda la decisión del dueño, que no se puede derivar |
 | `order_lines.unit_price` congela el precio | No es un dato derivado: es el hecho histórico de a cuánto se vendió. Cambiar el precio de la presentación no debe alterar pedidos pasados (sección 7: «precio congelado al crear») |
 | `orders.deposit_percent` congela la condición del pedido | Es el porcentaje aceptado al crear el pedido, no el ajuste vigente de la tienda. Cambiar el ajuste después no recalcula un pedido existente |
 | `orders.subtotal`, `due_now`, `paid`, `balance` | Son resúmenes guardados para lectura y bloqueo del pedido. `OrderAmounts` los calcula desde las líneas y el porcentaje congelado; la aplicación actualiza el pago confirmado y su efecto sobre el pedido en una sola transacción |
 | `decant_bottles.remaining_ml`, `reserved_ml` | La reserva concurrente de R9 exige decidir con un `UPDATE` condicional y un `CHECK` en la misma fila. La fila conserva el saldo inicial registrado y las operaciones posteriores guardan el cambio y su movimiento de forma atómica |
-| `decant_packs.total_decants`, `ml_per_decant`, `max_price_per_ml` copian la oferta | No dependen de `decant_pack_plans`: son lo que el cliente compró. Editar la oferta después no cambia los paquetes ya comprados (#144), igual que `order_lines.unit_price` congela el precio |
-| `decant_packs.remaining_decants` | Se puede derivar de `total_decants` menos los canjes, pero el canje concurrente de R34 exige decidir con un `UPDATE` condicional y un `CHECK` en la misma fila (#147), como los ml de las botellas |
+| `decant_packs.total_decants`, `ml_per_decant`, `max_price_per_ml` copian la oferta | No dependen de `decant_pack_plans`: son lo que el cliente compró. Editar la oferta después no cambia los paquetes ya comprados ([#144](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/144)), igual que `order_lines.unit_price` congela el precio |
+| `decant_packs.remaining_decants` | Se puede derivar de `total_decants` menos los canjes, pero el canje concurrente de R34 exige decidir con un `UPDATE` condicional y un `CHECK` en la misma fila ([#147](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/147)), como los ml de las botellas |
 | `payments.charged_amount`, `exchange_rate` | Conservan el importe real de aquel cobro y su conversión, aunque cambie después el tipo de cambio de la tienda. CRC se guarda en colones enteros y USD en centavos; los montos enviados por HTTP son responsabilidad del adaptador |
 | `payments.refunded_amount` | Resume el principal devuelto para impedir un exceso al bloquear el pago. Solo crece con un reembolso confirmado y se actualiza junto con el reembolso y su efecto sobre el pedido |
-| `refunds.charged_amount` | Congela lo que se pidió a la pasarela en su unidad. Con PayPal depende del tipo de cambio del pago y de las devoluciones que salieron antes, así que recalcularlo después podría dar otro centavo; también es lo que se compara con la respuesta y el aviso de la pasarela (#97) |
+| `refunds.charged_amount` | Congela lo que se pidió a la pasarela en su unidad. Con PayPal depende del tipo de cambio del pago y de las devoluciones que salieron antes, así que recalcularlo después podría dar otro centavo; también es lo que se compara con la respuesta y el aviso de la pasarela ([#97](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/97)) |
 | `webhook_events` no tiene `business_id` | El evento de la pasarela llega antes de saber a qué tienda pertenece, y se identifica por `(gateway, event_id)` para procesarse una sola vez (R38). La tienda se obtiene después, por el pago que el evento menciona. No tiene política de fila porque no tiene `business_id` |
 | `business_id` se repite en las tablas hijas | Una tabla hija como `appointments` lleva `business_id` aunque su padre ya lo implique. Es lo que permite las llaves foráneas compuestas `(parent_id, business_id)` hacia la llave `(id, business_id)` del padre, que impiden que una fila apunte al recurso de otra tienda (R56), y la política de fila directa. Los dos valores no pueden discrepar: lo garantiza la llave compuesta |
 | `businesses.settings` es un `jsonb` | Guarda los ajustes por tienda (sección 10 de la especificación). Cada ajuste se lee y se escribe entero y ninguno se consulta ni se une con otras tablas; un `CHECK` exige que sea un objeto. Si un ajuste necesitara consultarse o validarse por columna, se promueve a columna |
@@ -823,7 +823,7 @@ Las columnas de la sección 7 que guardan un valor calculable se justifican, o s
 |---|---|
 | `appointments.blocked_until` | Fin de la cita más su margen; la restricción de exclusión (R14) la necesita como columna |
 
-`Payable` es el concepto del dominio para lo que se cobra. La persistencia lo guarda con una columna por tipo, `payments.order_id` o `payments.decant_pack_id` desde #143, cada una con su llave foránea compuesta, y `payments_payable_check` exige exactamente una: no hay un identificador polimórfico sin validar.
+`Payable` es el concepto del dominio para lo que se cobra. La persistencia lo guarda con una columna por tipo, `payments.order_id` o `payments.decant_pack_id` desde [#143](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/143), cada una con su llave foránea compuesta, y `payments_payable_check` exige exactamente una: no hay un identificador polimórfico sin validar.
 
 ## Lista blanca de `BusinessKeysTest`
 
@@ -860,13 +860,13 @@ Un pull request que agrega una migración con una tabla:
 4. Si una llave única o foránea de una tabla con `business_id` no incluye `business_id`, la agrega a `KEYS_WITHOUT_BUSINESS` y su justificación a la [lista blanca](#lista-blanca-de-businesskeystest).
 5. Si la tabla lleva `business_id`, cumple los pasos de [Cómo agregar una tabla de una tienda](database.md#cómo-agregar-una-tabla-de-una-tienda).
 6. Si la tabla era una de las previstas, quita su fila de [Tablas previstas](#tablas-previstas) y le da su detalle.
-7. Un término o un estado nuevo se agrega a [ubiquitous-language.md](ubiquitous-language.md).
+7. Un término o un estado nuevo se agrega a [ubiquitous-language.md](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/blob/main/docs/ubiquitous-language.md).
 
-## Citas de prueba (#59)
+## Citas de prueba ([#59](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/59))
 
 `appointments` guarda cada cita de una tienda con su servicio, su cliente y la persona que atiende, el inicio, el fin y
 `blocked_until` (el fin más el margen del servicio). El estado es uno de `held`, `confirmed`, `cancelled`, `completed`,
-`no_show` o `expired`, y una cita `held` exige `hold_expires_at`; `cancelled_at` y `cancel_reason` llegan con #66.
+`no_show` o `expired`, y una cita `held` exige `hold_expires_at`; `cancelled_at` y `cancel_reason` llegan con [#66](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/66).
 `appointment_perfumes` guarda los perfumes que se van a probar, uno por perfume y cita, con el `business_id` de la cita.
 
 La restricción `appointments_member_slot_exclusion` impide que una persona tenga dos citas activas (`held` o `confirmed`)
@@ -874,7 +874,7 @@ cuyos rangos `[starts_at, blocked_until)` se crucen. Al ser un rango semiabierto
 termina el margen de la anterior. `blocked_until` se guarda en lugar de calcularse para que la restricción no dependa de
 la duración ni del margen vigentes del servicio.
 
-Las dos tablas tienen su política `<tabla>_business_isolation`, habilitada y forzada. Desde #64, `appointments_definer_read`
+Las dos tablas tienen su política `<tabla>_business_isolation`, habilitada y forzada. Desde [#64](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/64), `appointments_definer_read`
 da solo lectura al dueño del esquema, igual que `orders_definer_read`, para que la rama `appointment` de
 `fn_customer_resource_business` resuelva la tienda de una cita cuando su cliente autenticado todavía no tiene contexto
 (`GET /api/v1/cuenta/citas/{cita}`): la función une la cita con su ficha de `customers` por `customer_id` y

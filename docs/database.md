@@ -1,6 +1,6 @@
 # Base de datos: PostgreSQL 18
 
-ArchivumParfums usa PostgreSQL 18 como único motor, en desarrollo, en pruebas y en producción. Este documento fija cómo se conecta la aplicación y cómo se crean y versionan los objetos de la base. El detalle de cada tabla y la verificación de la tercera forma normal están en `docs/data-model.md` (#35).
+ArchivumParfums usa PostgreSQL 18 como único motor, en desarrollo, en pruebas y en producción. Este documento fija cómo se conecta la aplicación y cómo se crean y versionan los objetos de la base. El detalle de cada tabla y la verificación de la tercera forma normal están en `docs/data-model.md` ([#35](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/35)).
 
 ## Versión
 
@@ -20,15 +20,15 @@ La aplicación nunca se conecta con el rol dueño de las tablas.
 | `archivum_owner` | `pgsql_admin` | `DB_ADMIN_USERNAME`, `DB_ADMIN_PASSWORD` | Es dueño de las dos bases y ejecuta las migraciones | No atiende peticiones |
 | `archivum_app` | `pgsql` (por defecto) y `pgsql_locks` | `DB_USERNAME`, `DB_PASSWORD` | Lee y escribe filas | Crear, alterar o borrar tablas; no es superusuario ni tiene `BYPASSRLS`, `CREATEDB` ni `CREATEROLE` |
 
-`pgsql_locks` entra con el mismo rol a la misma base, en una sesión propia: la usan solo los bloqueos de la caché en `cache_locks`, como la clave de un trabajo único (#156). PostgreSQL anula toda la transacción cuando falla el `INSERT` con que Laravel intenta tomar un bloqueo que ya existe, así que el bloqueo nunca comparte la conexión de la transacción de una operación.
+`pgsql_locks` entra con el mismo rol a la misma base, en una sesión propia: la usan solo los bloqueos de la caché en `cache_locks`, como la clave de un trabajo único ([#156](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/156)). PostgreSQL anula toda la transacción cuando falla el `INSERT` con que Laravel intenta tomar un bloqueo que ya existe, así que el bloqueo nunca comparte la conexión de la transacción de una operación.
 
-El script `database/roles.sql` crea los dos roles y las dos bases, le quita a `PUBLIC` todo permiso sobre ellas y le da a `archivum_app` solo `CONNECT`. Lo ejecuta una sola vez por servidor un superusuario, con las contraseñas como variables de `psql`:
+El script `roles.sql` crea los dos roles y las dos bases, le quita a `PUBLIC` todo permiso sobre ellas y le da a `archivum_app` solo `CONNECT`. Desde la raíz de este repositorio, lo ejecuta una sola vez por servidor un superusuario, con las contraseñas como variables de `psql`:
 
 ```bash
-psql -U postgres -v owner_password='…' -v app_password='…' -f database/roles.sql
+psql -U postgres -v owner_password='…' -v app_password='…' -f roles.sql
 ```
 
-En desarrollo no hace falta ejecutarlo a mano: `composer install` llama a `php artisan archivum:install`, que hace lo mismo con el superusuario y deja contraseñas generadas en `.env` (#215). El script queda para los servidores donde no corre esa instalación de desarrollo.
+En desarrollo no hace falta ejecutarlo a mano: `composer install` llama a `php artisan archivum:install`, que hace lo mismo con el superusuario y deja contraseñas generadas en `.env` ([#215](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/215)). El script queda para los servidores donde no corre esa instalación de desarrollo.
 
 Las contraseñas nunca se versionan: quedan en el `.env` de cada integrante, que tampoco se versiona.
 
@@ -38,9 +38,9 @@ La primera migración, `0001_01_01_000000_grant_privileges_to_the_application_ro
 
 `archivum_app` no tiene permiso para cambiar el esquema: una migración con la conexión por defecto falla con `Insufficient privilege`. Por eso las migraciones usan la conexión `pgsql_admin`, que entra como `archivum_owner`.
 
-La separación importa por la seguridad a nivel de fila. En PostgreSQL los superusuarios y los roles con `BYPASSRLS` no pasan por las políticas, y el dueño de una tabla tampoco, salvo que la tabla las fuerce. Las tablas de una tienda las fuerzan (#32), pero la aplicación igual se conecta con un rol que no es dueño ni tiene `BYPASSRLS` (R55): el aislamiento entre tiendas no depende de una sola línea de una migración.
+La separación importa por la seguridad a nivel de fila. En PostgreSQL los superusuarios y los roles con `BYPASSRLS` no pasan por las políticas, y el dueño de una tabla tampoco, salvo que la tabla las fuerce. Las tablas de una tienda las fuerzan ([#32](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/32)), pero la aplicación igual se conecta con un rol que no es dueño ni tiene `BYPASSRLS` (R55): el aislamiento entre tiendas no depende de una sola línea de una migración.
 
-Un tercer rol, de mantenimiento, llega con #157 para las tareas que recorren todas las tiendas.
+Un tercer rol, de mantenimiento, llega con [#157](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/157) para las tareas que recorren todas las tiendas.
 
 ## Migraciones
 
@@ -88,7 +88,7 @@ El constructor de esquemas de Laravel no cubre funciones, procedimientos, trigge
 
 | Extensión | Migración | Para qué |
 |---|---|---|
-| `btree_gist` | La del esquema de horarios (#52); la de citas (#59) la reutiliza | Comparar con `=` columnas escalares (`business_id`, `member_id`, `weekday`) dentro del índice GiST de una restricción de exclusión |
+| `btree_gist` | La del esquema de horarios ([#52](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/52)); la de citas ([#59](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/59)) la reutiliza | Comparar con `=` columnas escalares (`business_id`, `member_id`, `weekday`) dentro del índice GiST de una restricción de exclusión |
 
 Se crea con `CREATE EXTENSION IF NOT EXISTS` y ninguna reversión la borra, porque otra migración puede depender de ella. Es una extensión de confianza: el rol dueño de la base la instala sin ser superusuario. Viene en el paquete `contrib` de PostgreSQL.
 
@@ -98,7 +98,7 @@ Es la segunda barrera del aislamiento entre tiendas. La primera está en el cód
 
 ### Qué protege
 
-Toda tabla con `business_id` tiene la seguridad a nivel de fila habilitada y forzada, con la política `<tabla>_business_isolation`. Hoy son `members` y `customers`, que protege la migración `enable_row_level_security_on_business_tables`; las cuatro del catálogo (`perfumes`, `perfume_notes`, `perfume_tags` y `perfume_variants`), que protege `enable_row_level_security_on_catalog_tables`; y las cuatro de horarios (`services`, `business_hours`, `staff_schedules` y `schedule_blocks`), que protege `enable_row_level_security_on_scheduling_tables` (#52). Cada migración aplica lo mismo a cada tabla; por ejemplo, a `customers`:
+Toda tabla con `business_id` tiene la seguridad a nivel de fila habilitada y forzada, con la política `<tabla>_business_isolation`. Hoy son `members` y `customers`, que protege la migración `enable_row_level_security_on_business_tables`; las cuatro del catálogo (`perfumes`, `perfume_notes`, `perfume_tags` y `perfume_variants`), que protege `enable_row_level_security_on_catalog_tables`; y las cuatro de horarios (`services`, `business_hours`, `staff_schedules` y `schedule_blocks`), que protege `enable_row_level_security_on_scheduling_tables` ([#52](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/52)). Cada migración aplica lo mismo a cada tabla; por ejemplo, a `customers`:
 
 ```sql
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
@@ -132,7 +132,7 @@ La tienda vive en la variable `app.business_id` y se fija con `set_config('app.b
 | Un recurso del cliente, `/api/v1/cuenta/...` | `auth:sanctum` y `business:account` | La del recurso, si es de la cuenta autenticada |
 | Un listado del cliente, `/api/v1/cuenta/...` | `auth:sanctum` | Cada tienda donde la cuenta es cliente, una transacción por tienda con `eachBusiness()` |
 
-Como el dueño de las tablas también está sujeto a las políticas, los sembradores escriben el personal y los clientes de cada tienda de demostración dentro de `BusinessTransaction`, y el comando `archivum:create-business` (#27) fija la tienda nueva antes de escribir a su dueño en `members`. En las pruebas cada fábrica fija la tienda de su fila antes de insertarla, con el trait `CreatesRowsOfABusiness`, y el trait `Tests\Support\Shared\ScopesQueriesToBusiness` fija la tienda de las consultas de una prueba. `businesses` y `users` no tienen política, así que se escriben sin fijar una tienda.
+Como el dueño de las tablas también está sujeto a las políticas, los sembradores escriben el personal y los clientes de cada tienda de demostración dentro de `BusinessTransaction`, y el comando `archivum:create-business` ([#27](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/27)) fija la tienda nueva antes de escribir a su dueño en `members`. En las pruebas cada fábrica fija la tienda de su fila antes de insertarla, con el trait `CreatesRowsOfABusiness`, y el trait `Tests\Support\Shared\ScopesQueriesToBusiness` fija la tienda de las consultas de una prueba. `businesses` y `users` no tienen política, así que se escriben sin fijar una tienda.
 
 ### Funciones que leen sin tienda
 
@@ -144,11 +144,11 @@ Hay preguntas que se responden antes de saber la tienda: al ingresar, de qué ti
 | `fn_member_business(user_id)` | La tienda y el rol de la persona activa del personal | `PostgresMemberships`, al ingresar y en el panel |
 | `fn_customer_businesses(user_id)` | Las tiendas donde la cuenta tiene fila en `customers` | Los listados de `/api/v1/cuenta` |
 | `fn_customer_resource_business(tipo, id, user_id)` | La tienda de un recurso propio, o `NULL` si es de otro cliente o no existe | Las rutas de un recurso de `/api/v1/cuenta` |
-| `fn_payment_business(gateway, referencia)` | La tienda del pago con esa referencia del proveedor (cobro, checkout o captura), o `NULL` si ningún pago la tiene | `PostgresPaymentBusinesses`, para el aviso verificado que no trae la tienda que Archivum envió con el cobro (#94) |
+| `fn_payment_business(gateway, referencia)` | La tienda del pago con esa referencia del proveedor (cobro, checkout o captura), o `NULL` si ningún pago la tiene | `PostgresPaymentBusinesses`, para el aviso verificado que no trae la tienda que Archivum envió con el cobro ([#94](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/94)) |
 
 Las cuatro son `SECURITY DEFINER` con `search_path` vacío y nombres calificados, propiedad de `archivum_owner` y con `EXECUTE` solo para `archivum_app`. Devuelven identificadores y el rol, nunca filas completas. Como `FORCE` también somete a `archivum_owner`, las tablas que consultan agregan la política de solo lectura `<tabla>_definer_read`, `FOR SELECT TO archivum_owner USING (true)`; `archivum_app` sigue sin ver filas sin tienda.
 
-`fn_customer_resource_business` acepta una lista cerrada de tipos y rechaza cualquier otro con el SQLSTATE `22023`. Conoce `customer`, la ficha del cliente en una tienda, y los recursos que cada esquema le agregó junto con el enum `CustomerResourceType` y `CustomerBusinessContext::RESOURCES`: `order` con #78, `payment` con #88 y `appointment` con #64. Cada tabla que la función lee lleva su política `<tabla>_definer_read`. El mecanismo está registrado en el [ADR 0011](adr/0011-customer-routes-resolve-the-business-through-definer-functions.md).
+`fn_customer_resource_business` acepta una lista cerrada de tipos y rechaza cualquier otro con el SQLSTATE `22023`. Conoce `customer`, la ficha del cliente en una tienda, y los recursos que cada esquema le agregó junto con el enum `CustomerResourceType` y `CustomerBusinessContext::RESOURCES`: `order` con [#78](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/78), `payment` con [#88](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/88) y `appointment` con [#64](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/64). Cada tabla que la función lee lleva su política `<tabla>_definer_read`. El mecanismo está registrado en el [ADR 0011](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/blob/main/docs/adr/0011-customer-routes-resolve-the-business-through-definer-functions.md).
 
 `php artisan migrate:fresh` borra las tablas pero no las funciones. Por eso cada migración elimina sus funciones antes de crearlas.
 
@@ -159,17 +159,17 @@ Las cuatro son `SECURITY DEFINER` con `search_path` vacío y nombres calificados
 | `users` | No tiene `business_id`: una cuenta puede ser cliente de varias tiendas, y el ingreso la busca por su correo antes de saber la tienda |
 | `businesses` | No tiene `business_id`: cada fila es una tienda, y las rutas públicas la buscan por el slug de la URL |
 | `personal_access_tokens` | No tiene `business_id`: el token pertenece a la cuenta |
-| `webhook_events` | No tiene `business_id`: el aviso de la pasarela llega antes de saber su tienda y se identifica por `(gateway, event_id)`, que lo guarda una sola vez (#95); la tienda sale después del pago que nombra el aviso verificado (#94) |
+| `webhook_events` | No tiene `business_id`: el aviso de la pasarela llega antes de saber su tienda y se identifica por `(gateway, event_id)`, que lo guarda una sola vez ([#95](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/95)); la tienda sale después del pago que nombra el aviso verificado ([#94](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/94)) |
 
 ### Llaves únicas y foráneas
 
 PostgreSQL revisa las llaves únicas, las restricciones de exclusión y las llaves foráneas sin aplicar las políticas. Por eso todas incluyen `business_id`. Una llave única sin la tienda rechazaría un valor que ya usa otra tienda y revelaría que existe; una llave foránea sin la tienda permitiría que una fila apunte a la de otra tienda.
 
-`BusinessKeysTest` lee `pg_constraint` y `pg_index` y falla si una de esas llaves no incluye `business_id`, salvo una lista de excepciones que `docs/data-model.md` (#35) justifica: la llave única global `members(user_id)` (una tienda por persona del personal) y las foráneas de `members` y `customers` hacia `users`.
+`BusinessKeysTest` lee `pg_constraint` y `pg_index` y falla si una de esas llaves no incluye `business_id`, salvo una lista de excepciones que `docs/data-model.md` ([#35](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/35)) justifica: la llave única global `members(user_id)` (una tienda por persona del personal) y las foráneas de `members` y `customers` hacia `users`.
 
 ### Restricciones de exclusión
 
-Dos tramos de horario del mismo día no se traslapan (#52), y dos citas activas de la misma persona tampoco (#59). La garantía es una restricción de exclusión de PostgreSQL y no una consulta previa del código: entre leer y escribir, otra petición puede tomar el mismo espacio.
+Dos tramos de horario del mismo día no se traslapan ([#52](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/52)), y dos citas activas de la misma persona tampoco ([#59](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/59)). La garantía es una restricción de exclusión de PostgreSQL y no una consulta previa del código: entre leer y escribir, otra petición puede tomar el mismo espacio.
 
 | Tabla | Restricción | Qué impide |
 |---|---|---|
@@ -178,13 +178,13 @@ Dos tramos de horario del mismo día no se traslapan (#52), y dos citas activas 
 
 | Pieza | Para qué |
 |---|---|
-| `timerange` | Tipo de rango propio, `CREATE TYPE public.timerange AS RANGE (subtype = time)`, para comparar horas locales. Lo crea la migración de `business_hours` (#52) y su `down()` lo borra |
+| `timerange` | Tipo de rango propio, `CREATE TYPE public.timerange AS RANGE (subtype = time)`, para comparar horas locales. Lo crea la migración de `business_hours` ([#52](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/52)) y su `down()` lo borra |
 | `btree_gist` | Permite comparar `business_id`, `member_id` y `weekday` con `=` dentro de un índice GiST. Se crea con `CREATE EXTENSION IF NOT EXISTS` y ninguna reversión la borra, porque otra migración puede depender de ella |
 | `[)` | El rango es cerrado al inicio y abierto al final: dos tramos contiguos, como 17:00–20:00 y 20:00–22:00, no se consideran traslapados |
 
-Un traslape falla con el SQLSTATE `23P01` y el nombre de la restricción en el mensaje; la API lo traduce a un 409 `conflicto` (#60). Las tablas de horarios guardan horas locales en `time`, mientras que `appointments` usará `tstzrange` porque sus rangos son instantes (#59).
+Un traslape falla con el SQLSTATE `23P01` y el nombre de la restricción en el mensaje; la API lo traduce a un 409 `conflicto` ([#60](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/60)). Las tablas de horarios guardan horas locales en `time`, mientras que `appointments` usará `tstzrange` porque sus rangos son instantes ([#59](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/59)).
 
-Dos reservas simultáneas del mismo espacio pueden, además, esperarse una a la otra mientras la restricción decide cuál se queda con él. PostgreSQL rompe ese interbloqueo haciendo fallar una de ellas con el SQLSTATE `40P01`, y `EloquentAppointmentRepository` repite una vez la transacción de esa cita (#63): para entonces la otra ya tomó el espacio o lo soltó, así que el segundo intento responde el 409 o guarda la cita. Un segundo interbloqueo, como cualquier otro error de la base, sigue como `error-interno` (#60). `AppointmentPersistenceTest` fija los tres casos y `BookingConcurrencyTest` corre la carrera con dos procesos.
+Dos reservas simultáneas del mismo espacio pueden, además, esperarse una a la otra mientras la restricción decide cuál se queda con él. PostgreSQL rompe ese interbloqueo haciendo fallar una de ellas con el SQLSTATE `40P01`, y `EloquentAppointmentRepository` repite una vez la transacción de esa cita ([#63](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/63)): para entonces la otra ya tomó el espacio o lo soltó, así que el segundo intento responde el 409 o guarda la cita. Un segundo interbloqueo, como cualquier otro error de la base, sigue como `error-interno` ([#60](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/60)). `AppointmentPersistenceTest` fija los tres casos y `BookingConcurrencyTest` corre la carrera con dos procesos.
 
 
 ### Cómo agregar una tabla de una tienda
@@ -200,7 +200,7 @@ El dominio, en PHP, decide las reglas del negocio. PostgreSQL garantiza la integ
 
 Todo objeto de la base se usa desde `Infrastructure/Persistence`, detrás de un puerto. El dominio y los casos de uso no saben que existen.
 
-## Citas de prueba (#59)
+## Citas de prueba ([#59](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/59))
 
 - `appointments`: `id` uuidv7, `business_id`, `service_id`, `customer_id`, `member_id`, `starts_at`, `ends_at`,
   `blocked_until`, `status`, `hold_expires_at`, `cancelled_at`, `cancel_reason` y marcas de tiempo. Llave única
@@ -212,5 +212,5 @@ Todo objeto de la base se usa desde `Infrastructure/Persistence`, detrás de un 
 - `appointment_perfumes`: `id`, `business_id`, `appointment_id`, `perfume_id` y marcas de tiempo, única por
   `(business_id, appointment_id, perfume_id)`, con llaves compuestas hacia `appointments` (borrado en cascada) y
   `perfumes`.
-- Ambas tablas tienen `ENABLE` y `FORCE ROW LEVEL SECURITY` con la política `<tabla>_business_isolation` de #32.
-  `btree_gist` se crea con `IF NOT EXISTS` y ninguna reversión la borra, como en #52.
+- Ambas tablas tienen `ENABLE` y `FORCE ROW LEVEL SECURITY` con la política `<tabla>_business_isolation` de [#32](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/32).
+  `btree_gist` se crea con `IF NOT EXISTS` y ninguna reversión la borra, como en [#52](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/52).

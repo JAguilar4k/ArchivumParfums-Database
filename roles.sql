@@ -1,5 +1,5 @@
 -- Run once per server as a superuser:
---   psql -U postgres -v owner_password='...' -v app_password='...' -f database/roles.sql
+--   psql -U postgres -v owner_password='...' -v app_password='...' -f roles.sql
 
 SET password_encryption = 'scram-sha-256';
 
