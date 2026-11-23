@@ -83,6 +83,7 @@ erDiagram
         varchar name
         varchar email UK
         varchar password
+        boolean is_platform_admin
     }
     members {
         uuid id PK
@@ -297,7 +298,7 @@ Llaves candidatas: `id` y `slug`. Sin política de fila: las rutas públicas bus
 
 ### users
 
-Cada fila es una cuenta de acceso: una persona del personal o un cliente. Una cuenta no pertenece a una tienda: el mismo cliente puede operar en varias, y la tienda de una persona del personal vive en `members`.
+Cada fila es una cuenta de acceso: una persona del personal, un cliente o quien administra la plataforma. Una cuenta no pertenece a una tienda: el mismo cliente puede operar en varias, y la tienda de una persona del personal vive en `members`.
 
 | Columna | Tipo | Regla |
 |---|---|---|
@@ -305,6 +306,7 @@ Cada fila es una cuenta de acceso: una persona del personal o un cliente. Una cu
 | `name` | `varchar(120)` | Obligatoria; `users_name_check`: no vacía |
 | `email` | `varchar(255)` | Única en todo el sistema (`users_email_unique`) |
 | `password` | `varchar(255)` | Hash de la contraseña, nunca la contraseña |
+| `is_platform_admin` | `boolean` | Obligatoria, falsa por defecto. Verdadera en la cuenta que crea y lista tiendas ([#347](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/347)); esa cuenta no tiene fila en `members` ni en `customers` |
 | `created_at`, `updated_at` | `timestamptz` | |
 
 Llaves candidatas: `id` y `email`. Sin política de fila: no tiene `business_id` y el ingreso busca la cuenta por su correo antes de saber la tienda.
