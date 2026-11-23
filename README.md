@@ -42,3 +42,5 @@ El job `Database` comprueba la sintaxis PHP y los roles, la propiedad de las bas
 ## Uso de IA
 
 Codex preparó la extracción del historial y la configuración inicial de este repositorio, conservó los archivos de migración y adaptó la documentación. Verificó que las 40 migraciones coinciden con el backend de origen y que pasan el análisis de sintaxis. También ejecutó el aprovisionamiento y las consultas de permisos en una instancia aislada de PostgreSQL 18.6. El equipo revisa el cambio en el [issue de coordinación](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/338).
+
+Codex escribió la migración de `customer_notice_attempts` para las confirmaciones por WhatsApp ([#166](https://github.com/JAguilar4k/ArchivumParfums-Hexagonal/issues/166)), y Claude Code la trasladó desde el backend con su documentación. Sus pruebas de esquema corren en el backend.
